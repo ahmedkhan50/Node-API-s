@@ -1,0 +1,22 @@
+{
+  "name": "node-api-s",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ahmedkhan50/Node-API-s.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ahmedkhan50/Node-API-s/issues"
+  },
+  "homepage": "https://github.com/ahmedkhan50/Node-API-s#readme",
+  "dependencies": {
+    "mongodb": "^2.2.5"
+  }
+}
