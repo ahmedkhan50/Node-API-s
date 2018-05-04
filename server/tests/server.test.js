@@ -3,9 +3,10 @@ const expect = require('expect');
 
 const app = require('../server').app;
 const Todo = require('../models/todo').Todo;
+const ObjectId = require('mongodb').ObjectId;
 
 const todos = [
-    { text: 'test to do' }, { text: 'this is great!!' }
+    { text: 'test to do', _id: new ObjectId() }, { text: 'this is great!!', _id: new ObjectId() }
 ]
 
 beforeEach((done) => {
@@ -67,6 +68,38 @@ describe('the get /todos route', () => {
             .expect(200)
             .expect((res) => {
                 expect(res.body.todos.length).toBe(2);
+            })
+            .end(done);
+    });
+});
+
+describe('/get /todo:id', () => {
+    it('should return the todo doc', (done) => {
+        request(app)
+            .get(`/todos/${todos[0]._id.toHexString()}`)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo.text).toBe(todos[0].text);
+            })
+            .end(done);
+    });
+
+    it('should return 404 if todo not found', (done) => {
+        request(app)
+            .get(`/todos/${new ObjectId().toHexString()}`)
+            .expect(404)
+            .expect((res) => {
+                expect(res.body).toBe('no results for todo id')
+            })
+            .end(done);
+    });
+
+    it('should return 404 for non object id\'\s',(done)=>{
+        request(app)
+            .get(`/todos/123`)
+            .expect(404)
+            .expect((res) => {
+                expect(res.body.error).toBe('not a valid object id...')
             })
             .end(done);
     });
