@@ -35,7 +35,6 @@ app.get('/todos', (req, res) => {
 });
 
 // find todo by Id
-
 app.get('/todos/:id', (req, res) => {
     var id = req.params.id;
     if (ObjectId.isValid(id)) {
@@ -47,6 +46,23 @@ app.get('/todos/:id', (req, res) => {
         }).catch((error) => {
             return res.status(404).send('no results for todo id');
         })
+    }
+    else {
+        return res.status(404).send({ error: 'not a valid object id...' });
+    }
+});
+
+app.delete('/todos/:id', (req, res) => {
+    var id = req.params.id;
+    if (ObjectId.isValid(id)) {
+        Todo.findByIdAndRemove(id).then((todo) => {
+            if (!todo) {
+                return res.status(404).send('no results for todo id');
+            }
+            res.send({ todo: todo });
+        }).catch((error) => {
+            return res.status(404).send('no results for todo id');
+        });
     }
     else {
         return res.status(404).send({ error: 'not a valid object id...' });

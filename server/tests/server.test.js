@@ -94,9 +94,52 @@ describe('/get /todo:id', () => {
             .end(done);
     });
 
-    it('should return 404 for non object id\'\s',(done)=>{
+    it('should return 404 for non object id\'\s', (done) => {
         request(app)
             .get(`/todos/123`)
+            .expect(404)
+            .expect((res) => {
+                expect(res.body.error).toBe('not a valid object id...')
+            })
+            .end(done);
+    });
+});
+
+describe('/todo delete by id', () => {
+    it('should delete valid id', (done) => {
+        var hexId = todos[1]._id.toHexString();
+        request(app)
+            .delete(`/todos/${hexId}`)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo.text).toBe(todos[1].text);
+            })
+            .end((error, res) => {
+                if (error) {
+                    return done(error);
+                }
+
+                Todo.findById(hexId).then((todo) => {
+                    expect(todo).toNotExist();
+                    done();
+                })
+                    .catch((error) => done(error));
+            })
+    });
+
+    it('invalid ObjId', (done) => {
+        request(app)
+            .delete(`/todos/${new ObjectId().toHexString()}`)
+            .expect(404)
+            .expect((res) => {
+                expect(res.body).toBe('no results for todo id');
+            })
+            .end(done);
+    });
+
+    it('should return 404 for non object id\'\s', (done) => {
+        request(app)
+            .delete(`/todos/123`)
             .expect(404)
             .expect((res) => {
                 expect(res.body.error).toBe('not a valid object id...')
