@@ -5,6 +5,7 @@ const mongoose = require('./db/mongoose').mongoose;
 const Todo = require('./models/todo').Todo;
 const User = require('./models/user').User;
 const ObjectId = require('mongodb').ObjectId;
+const _ = require('lodash');
 const port = process.env.PORT || 3000;
 const app = express();
 
@@ -67,6 +68,37 @@ app.delete('/todos/:id', (req, res) => {
     else {
         return res.status(404).send({ error: 'not a valid object id...' });
     }
+});
+
+app.patch('/todos/:id', (req, res) => {
+    var id = req.params.id;
+    var body = _.pick(req.body, ['text', 'completed']);
+    if (!ObjectId.isValid(id)) {
+        return res.status(404).send({ error: 'not a valid object id...' });
+    }
+
+    if (_.isBoolean(body.completed) && body.completed) {
+        body.completedAt = new Date().getTime();
+    }
+    else {
+        body.completed = false;
+        body.completedAt = null;
+    }
+
+    Todo.findByIdAndUpdate(id, {
+        $set: body
+    },
+        {
+            new: true
+        }
+    ).then((todo) => {
+        if (!todo) {
+            return res.status(404).send();
+        }
+        res.send({ todo: todo });
+    }).catch((error) => {
+        res.status(400).send();
+    })
 });
 
 app.listen(port, () => {
