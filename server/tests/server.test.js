@@ -3,18 +3,12 @@ const expect = require('expect');
 
 const app = require('../server').app;
 const Todo = require('../models/todo').Todo;
+const User = require('../models/user').User;
 const ObjectId = require('mongodb').ObjectId;
+const {todos,populateToDos,users,populateUsers} = require('./seed/seed');
 
-const todos = [
-    { text: 'test to do', _id: new ObjectId() },
-    { text: 'this is great!!', _id: new ObjectId(), completed: true, completedAt: 222 }
-]
-
-beforeEach((done) => {
-    Todo.remove({}).then(() => {
-        return Todo.insertMany(todos);
-    }).then((res) => done());
-});
+beforeEach(populateToDos);
+beforeEach(populateUsers);
 
 describe('/todos post call test', () => {
 
@@ -175,6 +169,71 @@ describe('/todos patch with completed true', () => {
                 expect(res.body.todo.completedAt).toBe(null);
             })
             .end(done);
+    })
+});
+
+describe('GET users/me',()=>{
+    it('should return user if authenticated',(done)=>{
+         request(app)
+         .get('/users/me')
+         .set('x-auth',users[0].tokens[0].token)
+         .expect(200)
+         .expect((res)=>{
+             expect(res.body._id).toBe(users[0]._id.toHexString());
+             expect(res.body.email).toBe(users[0].email);
+         })
+         .end(done);
+    });
+    it('should return 401 if user not authenticated',(done)=>{
+        request(app)
+        .get('/users/me')
+        .expect(401)
+        .expect((res)=>{
+            expect(res.body).toEqual({});
+        })
+        .end(done);
+    })
+});
+
+describe('POST users/',()=>{
+    it('should create user',(done)=>{
+      var email = 'akhan3@tw.com';
+      var password = '123456';
+      request(app)
+      .post('/users')
+      .send({email:email,password:password})
+      .expect(200)
+      .expect((res)=>{
+          expect(res.headers['x-auth']).toBeDefined();
+          expect(res.body.email).toBeDefined();
+          expect(res.body.email).toBe(email);
+      })
+      .end((err)=>{
+          if(err){
+             return done(err);
+          }
+          User.findOne({email:email}).then((user)=>{
+              expect(user).toBeDefined();
+              expect(user.password).toNotEqual(password); //bec password will be hashed..
+              done();
+          })
+      });
+    });
+ 
+    it('if invalid email/password',(done)=>{
+        request(app)
+        .post('/users')
+        .send({email:'as',password:'123'})
+        .expect(400)
+        .end(done);
+    });
+
+    it('should not create user if email in use',(done)=>{
+        request(app)
+        .post('/users')
+        .send({email:users[0].email,password:users[0].password})
+        .expect(400)
+        .end(done);
     })
 });
 
