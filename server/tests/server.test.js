@@ -115,7 +115,7 @@ describe('/todo delete by id', () => {
                 }
 
                 Todo.findById(hexId).then((todo) => {
-                    expect(todo).toNotExist();
+                    expect(todo).toBe(null);
                     done();
                 })
                     .catch((error) => done(error));
@@ -127,7 +127,7 @@ describe('/todo delete by id', () => {
             .delete(`/todos/${new ObjectId().toHexString()}`)
             .expect(404)
             .expect((res) => {
-                expect(res.body).toBe('no results for todo id');
+                expect(res.body).toBe({});
             })
             .end(done);
     });
@@ -216,7 +216,7 @@ describe('POST users/',()=>{
               expect(user).toBeDefined();
               expect(user.password).toNotEqual(password); //bec password will be hashed..
               done();
-          })
+          }).catch((e)=>done(e));
       });
     });
  
@@ -236,5 +236,61 @@ describe('POST users/',()=>{
         .end(done);
     })
 });
+
+describe('/users/login',()=>{
+    it('should login user and return auth token',(done)=>{
+       request(app)
+       .post('/users/login')
+       .send({email:users[1].email,password:users[1].password})
+       .expect(200)
+       .expect((res)=>{
+            expect(res.headers['x-auth']).toBeDefined();
+       })
+       .end((err,res)=>{
+           if(err){
+               return done(err);
+           }
+
+           User.findById(users[1]._id).then((user)=>{
+               expect(user.toObject().tokens[0]).toMatchObject({
+                 access:'auth',
+                 token:res.headers['x-auth']
+               });
+               done();
+           }).catch((e)=>done(e));
+       })
+    });
+
+    it('should reject invalid email login',(done)=>{
+        request(app)
+        .post('/users/login')
+        .send({email:'xyz@gmail.com',password:'123456'})
+        .expect(400)
+        .expect((res)=>{
+            expect(res.headers['x-auth']).toBeUndefined();
+        })
+        .end(done);
+    });
+
+    it('should reject invalid password login',(done)=>{
+       request(app)
+       .post('/users/login')
+       .send({email:users[1].email,password:users[1].password+'2'})
+       .expect(400)
+       .expect((res)=>{
+            expect(res.headers['x-auth']).toBeUndefined();
+       })
+       .end((err,res)=>{
+           if(err){
+               return done(err);
+           }
+
+           User.findById(users[1]._id).then((user)=>{
+               expect(user.tokens.length).toEqual(0);
+               done();
+           }).catch((e)=>done(e));
+       })
+    });
+})
 
 
