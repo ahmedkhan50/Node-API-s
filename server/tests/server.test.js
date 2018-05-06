@@ -291,6 +291,25 @@ describe('/users/login',()=>{
            }).catch((e)=>done(e));
        })
     });
+});
+
+describe('delete /users/me/token',()=>{
+   it('should delete the user token to logout',(done)=>{
+         request(app)
+         .delete('/users/me/token')
+         .set('x-auth',users[0].tokens[0].token)
+         .expect(200)
+         .end((err,res)=>{
+            if(err){
+                return done(err);
+            }
+
+            User.findById(users[0]._id).then((user)=>{
+               expect(user.tokens.length).toEqual(0);
+               done();
+            }).catch((e)=>done(e));
+         });
+   });
 })
 
 
