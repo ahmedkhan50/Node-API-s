@@ -125,7 +125,7 @@ describe('/todos patch with completed true', () => {
             .expect((res) => {
                 expect(res.body.todo.text).toBe('i am great!');
                 expect(res.body.todo.completed).toBeTruthy();
-                expect(res.body.todo.completedAt).toBeDefined();
+                expect(typeof res.body.todo.completedAt).toBe('number');
             })
             .end(done);
     });
@@ -183,7 +183,7 @@ describe('/todo delete by id', () => {
             .set('x-auth', users[1].tokens[0].token)
             .expect(404)
             .expect((res) => {
-                expect(res.body).toBe({});
+                expect(res.body).toBeTruthy();
             })
             .end(done);
     });
