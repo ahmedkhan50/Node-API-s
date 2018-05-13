@@ -18,7 +18,7 @@ app.post('/todos', authenticate, (req, res) => {
         text: req.body.text,
         completed: req.body.completed,
         completedAt: req.body.completedAt,
-        _creator:req.user._id
+        _creator: req.user._id
     });
 
     toDo.save().then((doc) => {
@@ -30,9 +30,9 @@ app.post('/todos', authenticate, (req, res) => {
 
 });
 // get request to get all todos. 
-app.get('/todos', authenticate,(req, res) => {
+app.get('/todos', authenticate, (req, res) => {
     Todo.find({
-        _creator:req.user._id
+        _creator: req.user._id
     }).then((todos) => {
         res.send({ todos: todos });
     });
@@ -45,8 +45,8 @@ app.get('/todos/:id', authenticate, (req, res) => {
     var id = req.params.id;
     if (ObjectId.isValid(id)) {
         Todo.findOne({
-            _id:id,
-            _creator:req.user._id
+            _id: id,
+            _creator: req.user._id
         }).then((todo) => {
             if (!todo) {
                 return res.status(404).send('no results for todo id');
@@ -61,12 +61,12 @@ app.get('/todos/:id', authenticate, (req, res) => {
     }
 });
 
-app.delete('/todos/:id',authenticate, (req, res) => {
+app.delete('/todos/:id', authenticate, (req, res) => {
     var id = req.params.id;
     if (ObjectId.isValid(id)) {
         Todo.findOneAndRemove({
-            _id:id,
-            _creator:req.user._id
+            _id: id,
+            _creator: req.user._id
         }).then((todo) => {
             if (!todo) {
                 return res.status(404).send('no results for todo id');
@@ -81,7 +81,7 @@ app.delete('/todos/:id',authenticate, (req, res) => {
     }
 });
 
-app.patch('/todos/:id',authenticate, (req, res) => {
+app.patch('/todos/:id', authenticate, (req, res) => {
     var id = req.params.id;
     var body = _.pick(req.body, ['text', 'completed']);
     if (!ObjectId.isValid(id)) {
@@ -96,7 +96,7 @@ app.patch('/todos/:id',authenticate, (req, res) => {
         body.completedAt = null;
     }
 
-    Todo.findOneAndUpdate({_id:id,_creator:req.user._id}, {
+    Todo.findOneAndUpdate({ _id: id, _creator: req.user._id }, {
         $set: body
     },
         {
@@ -128,25 +128,27 @@ app.post('/users', (req, res) => {
 });
 
 // post route for logging in user
-app.post('/users/login', (req, res) => {
-    var body = _.pick(req.body, ['email', 'password']);
-
-    User.findByCredential(body.email, body.password).then((user) => {
-        return user.generateAuthToken().then((token) => {
-            res.header('x-auth', token).send(user);
-        });
-    }).catch((e) => {
+app.post('/users/login', async (req, res) => {
+    try {
+        var body = _.pick(req.body, ['email', 'password']);
+        const user = await User.findByCredential(body.email, body.password);
+        const token = await user.generateAuthToken();
+        res.header('x-auth', token).send(user);
+    }
+    catch (e) {
         res.status(400).send();
-    });
+    }
 });
 
 // logout route
-app.delete('/users/me/token', authenticate, (req, res) => {
-    req.user.removeToken(req.token).then(() => {
+app.delete('/users/me/token', authenticate, async (req, res) => {
+    try {
+        await req.user.removeToken(req.token);
         res.status(200).send();
-    }, (error) => {
+    }
+    catch (e) {
         res.status(400).send();
-    });
+    }
 });
 
 // get method to get user. 
